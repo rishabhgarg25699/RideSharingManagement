@@ -105,44 +105,50 @@ public class RideSharingService {
   }
 
   private void printVehicleData() {
-    rideSharingDTO
-        .getVehicleDTOList()
-        .forEach(
-            vehicleDTO -> {
-              System.out.println(
-                  "Vehicle Name : "
-                      + vehicleDTO.getVehicleName()
-                      + " And Number : "
-                      + vehicleDTO.getVehicleNumber());
-            });
+    if (nonNull(rideSharingDTO.getVehicleDTOList())) {
+      rideSharingDTO
+          .getVehicleDTOList()
+          .forEach(
+              vehicleDTO -> {
+                System.out.println(
+                    "Vehicle Name : "
+                        + vehicleDTO.getVehicleName()
+                        + " And Number : "
+                        + vehicleDTO.getVehicleNumber());
+              });
+    }
   }
 
   private void printCustomersData() {
-    rideSharingDTO
-        .getCustomerDTOList()
-        .forEach(
-            customerDTO -> {
-              System.out.println(
-                  "Name : " + customerDTO.getName() + " And Age : " + customerDTO.getAge());
-            });
+    if (nonNull(rideSharingDTO.getCustomerDTOList())) {
+      rideSharingDTO
+          .getCustomerDTOList()
+          .forEach(
+              customerDTO -> {
+                System.out.println(
+                    "Name : " + customerDTO.getName() + " And Age : " + customerDTO.getAge());
+              });
+    }
   }
 
   private void printStats() {
     List<CustomerDTO> customerDTOList = rideSharingDTO.getCustomerDTOList();
 
-    customerDTOList.forEach(
-        customerDTO -> {
-          int takeRide =
-              findRides.get(customerDTO.getName()) == null
-                  ? 0
-                  : findRides.get(customerDTO.getName());
-          int offerRide =
-              offeredRides.get(customerDTO.getName()) == null
-                  ? 0
-                  : offeredRides.get(customerDTO.getName());
-          System.out.println(
-              customerDTO.getName() + ": " + takeRide + " Taken, " + offerRide + " Offered");
-        });
+    if (nonNull(customerDTOList)) {
+      customerDTOList.forEach(
+          customerDTO -> {
+            int takeRide =
+                findRides.get(customerDTO.getName()) == null
+                    ? 0
+                    : findRides.get(customerDTO.getName());
+            int offerRide =
+                offeredRides.get(customerDTO.getName()) == null
+                    ? 0
+                    : offeredRides.get(customerDTO.getName());
+            System.out.println(
+                customerDTO.getName() + ": " + takeRide + " Taken, " + offerRide + " Offered");
+          });
+    }
   }
 
   private void findRides(Scanner inputScanner) {
@@ -163,8 +169,8 @@ public class RideSharingService {
     boolean success = false;
     // LOGIC FOR FINDING THE RIDES FOR 2 CRITERIA'S
     List<OfferRide> availableRides = new ArrayList<>();
-	  OfferRide ride = findAvailableRidesFromOfferRide(source, destination, availableRides);
-	  int max = -1;
+    OfferRide ride = findAvailableRidesFromOfferRide(source, destination, availableRides);
+    int max = -1;
     if (criteria == 1) {
       success = maxVacantSeatsCriteria(seats, success, availableRides, ride, max);
     } else {
@@ -195,21 +201,24 @@ public class RideSharingService {
     }
   }
 
-	private OfferRide findAvailableRidesFromOfferRide(String source, String destination, List<OfferRide> availableRides) {
-		OfferRide ride = new OfferRide();
-		rideSharingDTO
-		    .getOfferRideList()
-		    .forEach(
-		        offerRide -> {
-		          if (Objects.equals(offerRide.getSource(), source)
-		              && Objects.equals(offerRide.getDestination(), destination)) {
-		            availableRides.add(offerRide);
-		          }
-		        });
-		return ride;
-	}
+  private OfferRide findAvailableRidesFromOfferRide(
+      String source, String destination, List<OfferRide> availableRides) {
+    OfferRide ride = new OfferRide();
+    if (nonNull(rideSharingDTO.getOfferRideList())) {
+      rideSharingDTO
+          .getOfferRideList()
+          .forEach(
+              offerRide -> {
+                if (Objects.equals(offerRide.getSource(), source)
+                    && Objects.equals(offerRide.getDestination(), destination)) {
+                  availableRides.add(offerRide);
+                }
+              });
+    }
+    return ride;
+  }
 
-	private boolean specialVehicleDemandCriteria(
+  private boolean specialVehicleDemandCriteria(
       int seats, String preferredVehicleName, boolean success, List<OfferRide> availableRides) {
     for (OfferRide availableRide : availableRides) {
       if (Objects.equals(availableRide.getVehicleName(), preferredVehicleName)
@@ -283,8 +292,9 @@ public class RideSharingService {
       return;
     }
     uniqueCars.add(vehicleNumber);
-	  OfferRide offerRide = getOfferRide(driveName, source, destination, vehicleName, vehicleNumber, vacantSeats);
-	  List<OfferRide> offerRides = new ArrayList<>();
+    OfferRide offerRide =
+        getOfferRide(driveName, source, destination, vehicleName, vehicleNumber, vacantSeats);
+    List<OfferRide> offerRides = new ArrayList<>();
     offerRides.add(offerRide);
     if (nonNull(rideSharingDTO.getOfferRideList())) {
       rideSharingDTO.getOfferRideList().addAll(offerRides);
@@ -293,22 +303,28 @@ public class RideSharingService {
     }
   }
 
-	private OfferRide getOfferRide(String driveName, String source, String destination, String vehicleName, String vehicleNumber, int vacantSeats) {
-		OfferRide offerRide =
-		    OfferRide.builder()
-		        .riderName(driveName)
-		        .vehicleName(vehicleName)
-		        .vehicleNumber(vehicleNumber)
-		        .source(source)
-		        .destination(destination)
-		        .vacantSeats(vacantSeats)
-		        .build();
-		int count = offeredRides.getOrDefault(driveName, 0);
-		offeredRides.put(driveName, count + 1);
-		return offerRide;
-	}
+  private OfferRide getOfferRide(
+      String driveName,
+      String source,
+      String destination,
+      String vehicleName,
+      String vehicleNumber,
+      int vacantSeats) {
+    OfferRide offerRide =
+        OfferRide.builder()
+            .riderName(driveName)
+            .vehicleName(vehicleName)
+            .vehicleNumber(vehicleNumber)
+            .source(source)
+            .destination(destination)
+            .vacantSeats(vacantSeats)
+            .build();
+    int count = offeredRides.getOrDefault(driveName, 0);
+    offeredRides.put(driveName, count + 1);
+    return offerRide;
+  }
 
-	private void addNewVehicleInList(Scanner inputScanner) {
+  private void addNewVehicleInList(Scanner inputScanner) {
     System.out.println("1. ENTER VEHICLE OWNER NAME, VEHICLE NAME, VEHICLE NUMBER");
     String vehicleOwnerName = inputScanner.nextLine();
     String vehicleName = inputScanner.nextLine();
