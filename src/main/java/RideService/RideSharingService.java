@@ -9,10 +9,12 @@ import DataModel.VehicleDTO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.Set;
 
 import static java.util.Objects.nonNull;
 
@@ -21,6 +23,7 @@ public class RideSharingService {
   RideSharingDTO rideSharingDTO = new RideSharingDTO();
   Map<String, Integer> offeredRides = new HashMap<>();
   Map<String, Integer> findRides = new HashMap<>();
+  Set<String> uniqueCars = new HashSet<>();
 
   public void startGame() {
     System.out.println("------------------------------------ ");
@@ -87,6 +90,8 @@ public class RideSharingService {
           }
         case 8:
           {
+            System.out.println("Thanks for using Ride Sharing service");
+            System.out.println("-------------------------------------");
             System.exit(0);
             break;
           }
@@ -158,17 +163,8 @@ public class RideSharingService {
     boolean success = false;
     // LOGIC FOR FINDING THE RIDES FOR 2 CRITERIA'S
     List<OfferRide> availableRides = new ArrayList<>();
-    OfferRide ride = new OfferRide();
-    rideSharingDTO
-        .getOfferRideList()
-        .forEach(
-            offerRide -> {
-              if (Objects.equals(offerRide.getSource(), source)
-                  && Objects.equals(offerRide.getDestination(), destination)) {
-                availableRides.add(offerRide);
-              }
-            });
-    int max = -1;
+	  OfferRide ride = findAvailableRidesFromOfferRide(source, destination, availableRides);
+	  int max = -1;
     if (criteria == 1) {
       success = maxVacantSeatsCriteria(seats, success, availableRides, ride, max);
     } else {
@@ -199,7 +195,21 @@ public class RideSharingService {
     }
   }
 
-  private boolean specialVehicleDemandCriteria(
+	private OfferRide findAvailableRidesFromOfferRide(String source, String destination, List<OfferRide> availableRides) {
+		OfferRide ride = new OfferRide();
+		rideSharingDTO
+		    .getOfferRideList()
+		    .forEach(
+		        offerRide -> {
+		          if (Objects.equals(offerRide.getSource(), source)
+		              && Objects.equals(offerRide.getDestination(), destination)) {
+		            availableRides.add(offerRide);
+		          }
+		        });
+		return ride;
+	}
+
+	private boolean specialVehicleDemandCriteria(
       int seats, String preferredVehicleName, boolean success, List<OfferRide> availableRides) {
     for (OfferRide availableRide : availableRides) {
       if (Objects.equals(availableRide.getVehicleName(), preferredVehicleName)
@@ -236,16 +246,18 @@ public class RideSharingService {
         success = true;
       }
     }
-    System.out.println(
-        "RIDER IS AVAILABLE. RIDER'S NAME "
-            + ride.getRiderName()
-            + " VEHICLE NAME AND NUMBER IS "
-            + ride.getVehicleName()
-            + " "
-            + ride.getVehicleNumber()
-            + " and vacant seats are "
-            + ride.getVacantSeats());
-    ride.setSelected(true);
+    if (success) {
+      System.out.println(
+          "RIDER IS AVAILABLE. RIDER'S NAME "
+              + ride.getRiderName()
+              + " VEHICLE NAME AND NUMBER IS "
+              + ride.getVehicleName()
+              + " "
+              + ride.getVehicleNumber()
+              + " and vacant seats are "
+              + ride.getVacantSeats());
+      ride.setSelected(true);
+    }
     return success;
   }
 
@@ -266,18 +278,13 @@ public class RideSharingService {
       return;
     }
     int vacantSeats = Integer.parseInt(inputScanner.nextLine());
-    OfferRide offerRide =
-        OfferRide.builder()
-            .riderName(driveName)
-            .vehicleName(vehicleName)
-            .vehicleNumber(vehicleNumber)
-            .source(source)
-            .destination(destination)
-            .vacantSeats(vacantSeats)
-            .build();
-    int count = offeredRides.getOrDefault(driveName, 0);
-    offeredRides.put(driveName, count + 1);
-    List<OfferRide> offerRides = new ArrayList<>();
+    if (uniqueCars.contains(vehicleNumber)) {
+      System.out.println("CAN NOT ADD THIS VEHICLE AS THIS VEHICLE IS ALREADY ADDED");
+      return;
+    }
+    uniqueCars.add(vehicleNumber);
+	  OfferRide offerRide = getOfferRide(driveName, source, destination, vehicleName, vehicleNumber, vacantSeats);
+	  List<OfferRide> offerRides = new ArrayList<>();
     offerRides.add(offerRide);
     if (nonNull(rideSharingDTO.getOfferRideList())) {
       rideSharingDTO.getOfferRideList().addAll(offerRides);
@@ -286,7 +293,22 @@ public class RideSharingService {
     }
   }
 
-  private void addNewVehicleInList(Scanner inputScanner) {
+	private OfferRide getOfferRide(String driveName, String source, String destination, String vehicleName, String vehicleNumber, int vacantSeats) {
+		OfferRide offerRide =
+		    OfferRide.builder()
+		        .riderName(driveName)
+		        .vehicleName(vehicleName)
+		        .vehicleNumber(vehicleNumber)
+		        .source(source)
+		        .destination(destination)
+		        .vacantSeats(vacantSeats)
+		        .build();
+		int count = offeredRides.getOrDefault(driveName, 0);
+		offeredRides.put(driveName, count + 1);
+		return offerRide;
+	}
+
+	private void addNewVehicleInList(Scanner inputScanner) {
     System.out.println("1. ENTER VEHICLE OWNER NAME, VEHICLE NAME, VEHICLE NUMBER");
     String vehicleOwnerName = inputScanner.nextLine();
     String vehicleName = inputScanner.nextLine();
